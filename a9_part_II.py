@@ -23,10 +23,11 @@ def get_planet_radius(planet_name: str) -> str:
     infobox_text = clean_text(get_first_infobox_text(get_page_html(planet_name)))
     # print(infobox_text)
     # TODO: fill this in
-    pattern = "Polar radius(?P<radius>[\d.\n]+)"
+    pattern = r"Polar radius\s*(?P<radius>[\d,\.]+)"
     error_text = "Page infobox has no polar radius information"
     match = get_match(infobox_text, pattern, error_text)
-    return match.group("radius")
+    return match.group("radius").replace(",", "")
+
 
 def get_page_html(title: str) -> str:
     response = requests.get(
@@ -39,8 +40,18 @@ def get_page_html(title: str) -> str:
         },
         headers={"User-Agent": "intro-ai-class/1.0"}
     )
-    data = response.json()
-    return data["parse"]["text"]["*"]
+
+    # copilot helped me with this. in all honestly, idk what it changed but it fixed the code
+    try:
+        data = response.json()
+        return data["parse"]["text"]["*"]
+    except:
+        # Fallback: request the normal HTML page instead
+        html = requests.get(
+            f"https://en.wikipedia.org/wiki/{title}",
+            headers={"User-Agent": "intro-ai-class/1.0"}
+        ).text
+        return html
 
 def get_birth_date(name: str) -> str:
     """Gets birth date of the given person
@@ -91,11 +102,11 @@ if __name__ == "__main__":
     print(format_birth(get_birth_date("Anita Borg"), "Anita Borg"))
 
     # uncomment below lines for tests once you think you're getting the right output
-    # print('\n<<<< Running asserts, this might take a sec >>>>')
-    # assert get_birth_date("Grace Hopper") == "1906-12-09", "Incorrect birth date for Grace Hopper"
-    # assert get_birth_date("Alan Turing") == "1912-06-23", "Incorrect birth date for Alan Turing"
-    # assert get_birth_date("Tim Berners-Lee") == "1955-06-08", "Incorrect birth date for Tim Berners-Lee"
-    # assert get_birth_date("Anita Borg") == "1949-01-17", "Incorrect birth date for Anita Borg"
-    # print('\n<<<< Birth date tests passed >>>>')
+    print('\n<<<< Running asserts, this might take a sec >>>>')
+    assert get_birth_date("Grace Hopper") == "1906-12-09", "Incorrect birth date for Grace Hopper"
+    assert get_birth_date("Alan Turing") == "1912-06-23", "Incorrect birth date for Alan Turing"
+    assert get_birth_date("Tim Berners-Lee") == "1955-06-08", "Incorrect birth date for Tim Berners-Lee"
+    assert get_birth_date("Anita Borg") == "1949-01-17", "Incorrect birth date for Anita Borg"
+    print('\n<<<< Birth date tests passed >>>>')
 
-    # print('\n<<<< All tests passed! >>>>')
+    print('\n<<<< All tests passed! >>>>')
